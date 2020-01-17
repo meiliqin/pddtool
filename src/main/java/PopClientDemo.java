@@ -24,12 +24,12 @@ public class PopClientDemo {
     static final int pageSize = 100;
     static final String daytimeStart = "00:00:00";
     static final String daytimeEnd = "23:59:59";
+    static String accessToken = "786a0cce078145ea8f64df1c000f918a7b768176";
     static final String date = "2020-01-16";
     static SaleResult saleResult = new SaleResult(date, "当日销量数据");
 
 
     public static void main(String[] args) throws Exception {
-        String accessToken = "786a0cce078145ea8f64df1c000f918a7b768176";
 
         PopClient client = new PopHttpClient(clientId, clientSecret);
 
@@ -63,10 +63,10 @@ public class PopClientDemo {
             Collections.sort(goodItem.sku_list, new SkuComparator());
         }
         System.out.println("统计完成，输出结果：");
-        String saleResultStr=JsonUtil.transferToJson(saleResult);
+        String saleResultStr = JsonUtil.transferToJson(saleResult);
         System.out.println(saleResultStr);
         FileWriter writer;
-        String fileName="./"+date+"销售情况.txt";
+        String fileName = "./" + date + "销售情况.txt";
         try {
             writer = new FileWriter(fileName);
             writer.write("");
@@ -172,55 +172,68 @@ public class PopClientDemo {
         //获取商品列表
         String clientId = ddMainP.clientId;
         String clientSecret = ddMainP.clientSecret;
-        String accessToken = "ed15f8db3c304d5daa1735a6a87ac70b4224b2af";
         PopClient client = new PopHttpClient(clientId, clientSecret);
         PddGoodsListGetRequest request = new PddGoodsListGetRequest();
         PddGoodsListGetResponse response = client.syncInvoke(request, accessToken);
-        System.out.println(JsonUtil.transferToJson(response));
         List<PddGoodsListGetResponse.GoodsListGetResponseGoodsListItem> goodsList = response.getGoodsListGetResponse().getGoodsList();
-        //成本
-//        CostResult costResult = new CostResult();
+        System.out.println("正在获取商品列表..");
+        System.out.println(JsonUtil.transferToJson(goodsList));
+        System.out.println("已获得商品列表，根据该商品列表生成成本模板..");
+        CostResult costResult = new CostResult();
+        for (PddGoodsListGetResponse.GoodsListGetResponseGoodsListItem goodsListItem : goodsList) {
+            CostResult.GoodItem goodItem = new CostResult.GoodItem();
+            goodItem.goods_id = goodsListItem.getGoodsId();
+            goodItem.goods_name = goodsListItem.getGoodsName();
+            goodItem.thumb_url = goodsListItem.getThumbUrl();
+            List<PddGoodsListGetResponse.GoodsListGetResponseGoodsListItemSkuListItem> skuListItems = goodsListItem.getSkuList();
+            for (PddGoodsListGetResponse.GoodsListGetResponseGoodsListItemSkuListItem skuListItem : skuListItems) {
+                CostResult.SkuItem skuItem = new CostResult.SkuItem();
+                skuItem.sku_id = skuListItem.getSkuId();
+                skuItem.spec = skuListItem.getSpec();
+                skuItem.purchase_price = 0.00;
+                goodItem.sku_list.add(skuItem);
+
+            }
+            costResult.goodCostList.add(goodItem);
+            costResult.per_order_postage = 3.20;
+        }
+        System.out.println("生成成本模板..");
+        String fileName = "./" + "成本模板.txt";
+        FileWriter writer;
+        try {
+            writer = new FileWriter(fileName);
+            writer.write("");
+            writer.write(JsonUtil.transferToJson(costResult));
+            writer.flush();
+            writer.close();
+            System.out.println("成功生成成本模板在项目目录下，请修改每个sdu的purchase_price后保存,然后执行main3计算利润");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(JsonUtil.transferToJson(costResult));
+
+        //库存
+//        StockResult stockResult = new StockResult();
 //        for (PddGoodsListGetResponse.GoodsListGetResponseGoodsListItem goodsListItem : goodsList) {
-//            CostResult.GoodItem goodItem = new CostResult.GoodItem();
+//            StockResult.GoodItem goodItem = new StockResult.GoodItem();
 //            goodItem.goods_id = goodsListItem.getGoodsId();
 //            goodItem.goods_name = goodsListItem.getGoodsName();
 //            goodItem.thumb_url = goodsListItem.getThumbUrl();
 //            List<PddGoodsListGetResponse.GoodsListGetResponseGoodsListItemSkuListItem> skuListItems = goodsListItem.getSkuList();
 //
 //            for (PddGoodsListGetResponse.GoodsListGetResponseGoodsListItemSkuListItem skuListItem : skuListItems) {
-//                CostResult.SkuItem skuItem = new CostResult.SkuItem();
+//                StockResult.SkuItem skuItem = new StockResult.SkuItem();
 //                skuItem.sku_id = skuListItem.getSkuId();
 //                skuItem.spec = skuListItem.getSpec();
-//                skuItem.purchase_price = 0.00;
+//                skuItem.sku_stock_quantity = 0;
 //                goodItem.sku_list.add(skuItem);
-//
 //            }
-//            costResult.goodCostList.add(goodItem);
-//            costResult.per_order_postage = 3.20;
+//            goodItem.good_stock_quantity = -1;
+//            stockResult.goodStockList.add(goodItem);
 //        }
-//
-//        System.out.println(JsonUtil.transferToJson(costResult));
-        //库存
-        StockResult stockResult = new StockResult();
-        for (PddGoodsListGetResponse.GoodsListGetResponseGoodsListItem goodsListItem : goodsList) {
-            StockResult.GoodItem goodItem = new StockResult.GoodItem();
-            goodItem.goods_id = goodsListItem.getGoodsId();
-            goodItem.goods_name = goodsListItem.getGoodsName();
-            goodItem.thumb_url = goodsListItem.getThumbUrl();
-            List<PddGoodsListGetResponse.GoodsListGetResponseGoodsListItemSkuListItem> skuListItems = goodsListItem.getSkuList();
 
-            for (PddGoodsListGetResponse.GoodsListGetResponseGoodsListItemSkuListItem skuListItem : skuListItems) {
-                StockResult.SkuItem skuItem = new StockResult.SkuItem();
-                skuItem.sku_id = skuListItem.getSkuId();
-                skuItem.spec = skuListItem.getSpec();
-                skuItem.sku_stock_quantity = 0;
-                goodItem.sku_list.add(skuItem);
-            }
-            goodItem.good_stock_quantity = -1;
-            stockResult.goodStockList.add(goodItem);
-        }
-
-        System.out.println(JsonUtil.transferToJson(stockResult));
+//        System.out.println(JsonUtil.transferToJson(stockResult));
 
 
     }
