@@ -9,6 +9,8 @@ import com.pdd.pop.sdk.http.api.request.PddOrderListGetRequest;
 import com.pdd.pop.sdk.http.api.response.PddGoodsListGetResponse;
 import com.pdd.pop.sdk.http.api.response.PddOrderListGetResponse;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,12 +24,12 @@ public class PopClientDemo {
     static final int pageSize = 100;
     static final String daytimeStart = "00:00:00";
     static final String daytimeEnd = "23:59:59";
-    static final String date = "2020-01-12";
+    static final String date = "2020-01-16";
     static SaleResult saleResult = new SaleResult(date, "当日销量数据");
 
 
     public static void main(String[] args) throws Exception {
-        String accessToken = "14bc0edea9da4da2bc47ebb7f0aeb6c8f9052bb0";
+        String accessToken = "786a0cce078145ea8f64df1c000f918a7b768176";
 
         PopClient client = new PopHttpClient(clientId, clientSecret);
 
@@ -61,8 +63,19 @@ public class PopClientDemo {
             Collections.sort(goodItem.sku_list, new SkuComparator());
         }
         System.out.println("统计完成，输出结果：");
-        System.out.println(JsonUtil.transferToJson(saleResult));
-
+        String saleResultStr=JsonUtil.transferToJson(saleResult);
+        System.out.println(saleResultStr);
+        FileWriter writer;
+        String fileName="./"+date+"销售情况.txt";
+        try {
+            writer = new FileWriter(fileName);
+            writer.write("");
+            writer.write(saleResultStr);
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -154,22 +167,18 @@ public class PopClientDemo {
         return date.getTime();
     }
 
+
     public static void main2(String[] args) throws Exception {
+        //获取商品列表
         String clientId = ddMainP.clientId;
         String clientSecret = ddMainP.clientSecret;
         String accessToken = "ed15f8db3c304d5daa1735a6a87ac70b4224b2af";
         PopClient client = new PopHttpClient(clientId, clientSecret);
         PddGoodsListGetRequest request = new PddGoodsListGetRequest();
-//        request.setOuterId("str");
-//        request.setIsOnsale(0);
-//        request.setGoodsName("str");
-//        request.setPageSize(0);
-//        request.setPage(0);
-//        request.setOuterGoodsId("str");
-//        request.setCostTemplateId(0L);
         PddGoodsListGetResponse response = client.syncInvoke(request, accessToken);
         System.out.println(JsonUtil.transferToJson(response));
         List<PddGoodsListGetResponse.GoodsListGetResponseGoodsListItem> goodsList = response.getGoodsListGetResponse().getGoodsList();
+        //成本
 //        CostResult costResult = new CostResult();
 //        for (PddGoodsListGetResponse.GoodsListGetResponseGoodsListItem goodsListItem : goodsList) {
 //            CostResult.GoodItem goodItem = new CostResult.GoodItem();
@@ -191,8 +200,7 @@ public class PopClientDemo {
 //        }
 //
 //        System.out.println(JsonUtil.transferToJson(costResult));
-
-
+        //库存
         StockResult stockResult = new StockResult();
         for (PddGoodsListGetResponse.GoodsListGetResponseGoodsListItem goodsListItem : goodsList) {
             StockResult.GoodItem goodItem = new StockResult.GoodItem();
@@ -208,7 +216,7 @@ public class PopClientDemo {
                 skuItem.sku_stock_quantity = 0;
                 goodItem.sku_list.add(skuItem);
             }
-            goodItem.good_stock_quantity=-1;
+            goodItem.good_stock_quantity = -1;
             stockResult.goodStockList.add(goodItem);
         }
 

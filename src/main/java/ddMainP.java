@@ -23,7 +23,7 @@ public class ddMainP {
         try {
             String CodeUrl = getCodeUrl();
             System.out.println("CodeUrl:" + CodeUrl);
-            String code = "853de7592f82435ba3133432edb267257d029176";
+            String code = "a373157abd9f45dcb63d0b80b8455e80e4790c84";
             AccessTokenResponse accessTokenResponse = client.generate(code);
             accessToken = accessTokenResponse.getAccessToken();
 //            String ownerName = accessTokenResponse.getOwnerName();
